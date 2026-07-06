@@ -1,0 +1,36 @@
+# Finding 12 — Account Takeover via Record Overwrite
+
+**Severity:** Critical
+**OWASP:** A01 Broken Access Control
+**Status:** Verified fixed (for non-admin attacker; residual hardening recommended)
+
+## Description
+The account-creation endpoint used a write operation that overwrote any existing record when supplied with an identifier that already existed, rather than rejecting the duplicate. Because user identifiers were exposed via the unauthenticated user endpoint (Finding 03), an attacker could overwrite any existing user's record, including resetting their password, achieving account takeover.
+
+This finding was distinct from the unauthenticated-access issues: it concerned the underlying write logic and would persist even after authentication was added, since an authenticated user could still overwrite another user's record by reusing their identifier.
+
+## Proof of Concept (sanitised)
+```
+POST https://api.example.com/backend?route=/users
+{
+  "id": "[existing-user-id]",
+  "username": "[existing-username]",
+  "password": "[REDACTED]",
+  "name": "OVERWRITE TEST"
+}
+
+→ existing record replaced with attacker-supplied values
+```
+Testing was performed against a test account owned by the assessor to avoid affecting real users.
+
+## Impact
+An attacker could seize control of any existing account, including administrator accounts, by overwriting the stored record with a known password. The overwrite also destroyed the original record data.
+
+## Remediation
+- Reject creation requests where the identifier already exists (conditional write)
+- Handle updates through a separate authenticated endpoint that verifies ownership or admin rights
+- Generate identifiers server-side rather than accepting them from the client
+
+## Verification
+After remediation, an authenticated non-admin user attempting to overwrite an existing record received `403 Forbidden`. The write path is now protected by authorisation. As defence-in-depth, using a conditional write that rejects duplicate identifiers regardless of caller was recommended. Confirmed resolved from the standpoint of a non-admin attacker.
+
