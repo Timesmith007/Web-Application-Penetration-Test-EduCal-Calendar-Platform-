@@ -1,0 +1,30 @@
+# Finding 13 — Outdated Build Dependency with Known Advisory
+
+**Severity:** Low (see note)
+**OWASP:** A06 Vulnerable and Outdated Components
+**Status:** Reported
+
+## Description
+Dependency analysis identified a build tool dependency with a published security advisory. The affected component is part of the build tooling and runs during local development and the build process, not in the deployed production application.
+
+## How It Was Identified
+```
+npm i --package-lock-only
+npm audit
+→ advisory reported in a build-time dependency chain
+```
+
+## Severity Note
+The dependency scanner rated the underlying advisory as moderate/high in the abstract. In the context of how this application uses the component, the practical severity is **Low**, because the vulnerability affects only the local development server and is not exposed in the deployed application. This distinction between raw tool rating and contextual risk is important when triaging dependency findings.
+
+## Impact
+Practical impact is limited to a developer running the local development server. There is no production-facing exposure. Recorded because outdated build tooling accumulates risk over time and should be kept current as hygiene.
+
+## Remediation
+- Update the affected tooling to a current, supported version
+- Avoid blindly running automated "force" fixes that may introduce breaking major-version changes; upgrade deliberately and re-test the build
+- Run dependency analysis periodically as routine maintenance
+
+## Verification
+Remediation of low-severity, non-production-facing findings was left to the development team's maintenance cycle. Not re-tested as part of the critical-findings verification pass.
+
