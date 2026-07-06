@@ -1,0 +1,29 @@
+# Finding 04 — Unauthenticated Access to Calendar Data (Student PII)
+
+**Severity:** Critical
+**OWASP:** A01 Broken Access Control
+**Status:** Verified fixed
+
+## Description
+The calendar events endpoint returned all event data to any unauthenticated request, including event details containing student names and schedules. No authentication was required.
+
+## Proof of Concept (sanitised)
+```
+GET https://api.example.com/backend?route=/events
+(no authentication headers)
+
+→ 200 OK
+[ { "title": "[class]", "description": "[student names]", "date": "...", ... }, ... ]
+```
+
+## Impact
+Student personal data (names, schedules) was freely accessible to any unauthenticated party. Under applicable data-protection law (Singapore PDPA), organisations must protect personal data with reasonable security arrangements. This exposure represented a direct data-protection compliance concern in addition to the technical risk, with potential legal and reputational consequences.
+
+## Remediation
+- Enforce authentication on the events endpoint
+- Restrict access so users see only events they are associated with
+- Review whether personal data needs to be stored in event descriptions at all (data minimisation)
+
+## Verification
+After remediation, the unauthenticated request returned `401 Unauthorized`. Confirmed resolved.
+
